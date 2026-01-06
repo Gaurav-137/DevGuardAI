@@ -1,0 +1,24 @@
+{
+  "name": "devguard-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run watch\" \"npm run serve\"",
+    "start": "node server.js",
+    "build": "esbuild index.tsx --bundle --outfile=dist/index.js --loader:.tsx=tsx --sourcemap",
+    "watch": "esbuild index.tsx --bundle --outfile=dist/index.js --loader:.tsx=tsx --sourcemap --watch",
+    "serve": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0",
+    "recharts": "^2.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.18.11"
+  }
+}
