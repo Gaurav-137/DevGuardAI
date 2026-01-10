@@ -2,28 +2,6 @@
 
 Enterprise-grade operational telemetry platform for developer burnout and productivity monitoring.
 
-## Running the Application
-
-### Backend Server
-```bash
-cd backend
-npm install
-npm start
-```
-Backend will run on: http://localhost:3002
-
-### Frontend Server
-```bash
-cd frontend  
-npm install
-npm start
-```
-Frontend will run on: http://localhost:3000
-
-### Quick Start (Windows)
-- Backend: Double-click `backend/start.bat`
-- Frontend: Double-click `frontend/start.bat`
-
 ## Project Structure
 ```
 DevGuardAIElite/
@@ -50,3 +28,25 @@ DevGuardAIElite/
 - `GET /api/metrics/:developerId` - Get developer metrics
 - `GET /api/insights/:developerId` - Get AI insights
 - `POST /api/insights` - Save AI insight
+
+## Running the Application
+
+### Backend Server
+```bash
+cd backend
+npm install
+npm start
+```
+Backend will run on: http://localhost:3002
+
+### Frontend Server
+```bash
+cd frontend  
+npm install
+npm start
+```
+Frontend will run on: http://localhost:3000
+
+### Quick Start (Windows)
+- Backend: Double-click `backend/start.bat`
+- Frontend: Double-click `frontend/start.bat`
