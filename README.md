@@ -1,6 +1,6 @@
 # DevGuard AI Elite
 
-Enterprise-grade operational telemetry platform for developer burnout and productivity monitoring.
+AI-powered developer burnout detection & productivity monitoring platform for engineering teams.
 
 ## Project Structure
 ```
