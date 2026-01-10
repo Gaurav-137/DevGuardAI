@@ -6,6 +6,7 @@ import { AlertTriangle, Clock, GitCommit, CheckSquare, Sparkles, RefreshCw, Ligh
 import { apiService } from '../services/api';
 import { generateDeveloperInsight } from '../services/gemini';
 import { DashboardData } from '../types';
+import { formatChartDate, formatDate } from '../utils/dateUtils';
 
 const Dashboard: React.FC = () => {
   const { devId } = useParams<{ devId: string }>();
@@ -56,13 +57,14 @@ const Dashboard: React.FC = () => {
 
   if (!data) return <div className="text-primary p-10 font-bold">Subject registry entry 404.</div>;
 
-  const risk = data.latestMetric;
-  const scorePercent = Math.round(risk.burnout_score * 100);
+  // Null safety for latestMetric
+  const risk = data.latestMetric || { burnout_score: 0, risk_level: 'Low' as const };
+  const scorePercent = Math.round((risk.burnout_score || 0) * 100);
   const riskStyles = {
     High: 'text-red-900 bg-[#EBE5C2] border-[#504B38] shadow-[#504B38]/10',
     Medium: 'text-[#504B38] bg-[#B9B28A]/30 border-[#B9B28A] shadow-[#B9B28A]/10',
     Low: 'text-[#504B38] bg-[#F8F3D9] border-[#504B38]/30 shadow-[#504B38]/5'
-  }[risk.risk_level];
+  }[risk.risk_level || 'Low'];
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
@@ -136,7 +138,7 @@ const Dashboard: React.FC = () => {
                 <div key={i.id} className="bg-bg/50 border border-primary/10 p-6 rounded-2xl backdrop-blur-sm hover:border-primary/40 transition-colors shadow-sm">
                   <p className="text-[10px] font-black text-secondary mb-3 uppercase tracking-widest flex items-center gap-2">
                     <Clock className="w-3 h-3" />
-                    {new Date(i.created_at).toLocaleDateString()}
+                    {formatDate(i.created_at)}
                   </p>
                   <p className="text-sm text-primary leading-relaxed font-bold border-l-2 border-secondary pl-4">
                     "{i.insight_text}"
@@ -156,10 +158,10 @@ const Dashboard: React.FC = () => {
 
       {/* Grid Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-        <StatCard icon={<Clock />} label="Engagement" value={data.activities.reduce((s, a) => s + a.work_hours, 0).toFixed(0)} unit="HR" />
-        <StatCard icon={<GitCommit />} label="Git Velocity" value={data.activities.reduce((s, a) => s + a.commits, 0)} unit="PUSH" />
-        <StatCard icon={<GitPullRequest />} label="Peer Review" value={data.activities.reduce((s, a) => s + a.pull_requests, 0)} unit="PR" />
-        <StatCard icon={<CheckSquare />} label="Efficiency" value={data.activities.reduce((s, a) => s + a.tasks_completed, 0)} unit="TASK" />
+        <StatCard icon={<Clock />} label="Engagement" value={(data.activities || []).reduce((s, a) => s + (Number(a.work_hours) || 0), 0).toFixed(0)} unit="HR" />
+        <StatCard icon={<GitCommit />} label="Git Velocity" value={(data.activities || []).reduce((s, a) => s + (Number(a.commits) || 0), 0)} unit="PUSH" />
+        <StatCard icon={<GitPullRequest />} label="Peer Review" value={(data.activities || []).reduce((s, a) => s + (Number(a.pull_requests) || 0), 0)} unit="PR" />
+        <StatCard icon={<CheckSquare />} label="Efficiency" value={(data.activities || []).reduce((s, a) => s + (Number(a.tasks_completed) || 0), 0)} unit="TASK" />
       </div>
 
       {/* Charts */}
@@ -170,7 +172,7 @@ const Dashboard: React.FC = () => {
           </h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[...data.activities].reverse()}>
+              <AreaChart data={[...data.activities].reverse().map(a => ({ ...a, displayDate: formatChartDate(a.activity_date) }))}>
                 <defs>
                   <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--c-secondary)" stopOpacity={0.4} />
@@ -178,7 +180,7 @@ const Dashboard: React.FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="var(--c-secondary)" strokeOpacity={0.2} />
-                <XAxis dataKey="activity_date" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-light)', fontSize: 10, fontWeight: 'bold' }} />
+                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-light)', fontSize: 10, fontWeight: 'bold' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--c-light)', fontSize: 10, fontWeight: 'bold' }} />
                 <Tooltip
                   contentStyle={{ background: 'var(--c-light)', border: '1px solid var(--c-secondary)', borderRadius: '16px', color: 'var(--c-primary)' }}

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Search, ChevronRight, Mail, Briefcase, Calendar, Edit3, X, Shield, BadgeCheck } from 'lucide-react';
+import { UserPlus, Search, ChevronRight, Mail, Briefcase, Calendar, Edit3, X, Shield, BadgeCheck, Trash2 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { Developer } from '../types';
 
@@ -50,6 +50,18 @@ const Developers: React.FC<Props> = ({ onSelect }) => {
     setEditDev(dev);
     setFormData({ name: dev.name, email: dev.email, role: dev.role });
     setShowForm(true);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (confirm('Permanently remove this personnel record from the system?')) {
+      try {
+        await apiService.deleteDeveloper(id);
+        fetchDevs();
+      } catch (error: any) {
+        alert(`Failed to delete developer: ${error.message}`);
+      }
+    }
   };
 
   const filteredDevs = devs.filter(d =>
@@ -188,6 +200,13 @@ const Developers: React.FC<Props> = ({ onSelect }) => {
                   title="Edit Record"
                 >
                   <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(e, dev.id)}
+                  className="p-2.5 bg-bg border border-primary/10 hover:border-red-900 hover:text-light rounded-xl text-primary/60 transition-all shadow-sm active:scale-95"
+                  title="Delete Record"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
                 <div className="p-2.5 bg-primary text-bg rounded-xl group-hover:translate-x-1 transition-transform shadow-lg">
                   <ChevronRight className="w-4 h-4" />

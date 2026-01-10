@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, TrendingUp, AlertCircle, History, ShieldAlert, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Lightbulb, TrendingUp, AlertCircle, History, ShieldAlert, Zap, AlertTriangle, CheckCircle2, Trash2 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { AIInsight, Developer } from '../types';
 
@@ -24,6 +24,17 @@ const Insights: React.FC<Props> = ({ selectedDevId }) => {
       setLoading(false);
     });
   }, []);
+
+  const handleDelete = async (id: number | string) => {
+    if (confirm('Permanently delete this AI diagnostic record?')) {
+      try {
+        await apiService.deleteInsight(id);
+        setInsights(prev => prev.filter(i => i.id !== id));
+      } catch (error: any) {
+        alert(`Failed to delete insight: ${error.message}`);
+      }
+    }
+  };
 
   const getDevName = (id: number) => devs.find(d => d.id === id)?.name || "Unknown Asset";
 
@@ -129,9 +140,18 @@ const Insights: React.FC<Props> = ({ selectedDevId }) => {
                       </span>
                     </div>
                   </div>
-                  <div className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${config.pill}`}>
-                    {config.icon}
-                    {insight.severity} Priority Signal
+                  <div className="flex items-center gap-3">
+                    <div className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${config.pill}`}>
+                      {config.icon}
+                      {insight.severity} Priority Signal
+                    </div>
+                    <button
+                      onClick={() => handleDelete(insight.id)}
+                      className="p-2.5 bg-bg border border-primary/10 hover:border-red-900 hover:text-light rounded-xl text-primary/60 transition-all shadow-sm active:scale-95 opacity-0 group-hover:opacity-100"
+                      title="Delete Insight"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
                 <div className="relative pl-8 border-l-2 border-primary/20 py-2 z-10">

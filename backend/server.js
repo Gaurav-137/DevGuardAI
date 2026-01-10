@@ -49,6 +49,25 @@ app.post('/api/developers', async (req, res) => {
   }
 });
 
+// 2b. Delete developer
+app.delete('/api/developers/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM developers WHERE id = $1 RETURNING *',
+      [parseInt(id)]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Developer not found' });
+    } else {
+      res.status(200).json({ message: 'Developer deleted successfully', deleted: result.rows[0] });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 3. Log daily activity
 app.post('/api/activity', async (req, res) => {
   const { developer_id, work_hours, commits, tasks_completed, activity_date, pull_requests, meetings, pending_tasks } = req.body;
@@ -70,6 +89,25 @@ app.post('/api/activity', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: err.message });
+  }
+});
+
+// 3b. Delete activity record
+app.delete('/api/activity/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM developer_activity WHERE id = $1 RETURNING *',
+      [parseInt(id)]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Activity record not found' });
+    } else {
+      res.status(200).json({ message: 'Activity deleted successfully', deleted: result.rows[0] });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -149,6 +187,40 @@ app.get('/api/insights', async (req, res) => {
   }
 });
 
+// 8b. Get insights for specific developer
+app.get('/api/insights/:developerId', async (req, res) => {
+  const { developerId } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM ai_insights WHERE developer_id = $1 ORDER BY created_at DESC',
+      [parseInt(developerId)]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 8c. Delete insight
+app.delete('/api/insights/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM ai_insights WHERE id = $1 RETURNING *',
+      [parseInt(id)]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Insight not found' });
+    } else {
+      res.status(200).json({ message: 'Insight deleted successfully', deleted: result.rows[0] });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 9. Save AI Insight
 app.post('/api/insights', async (req, res) => {
   const { developer_id, insight_text, severity } = req.body;
@@ -163,6 +235,7 @@ app.post('/api/insights', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Backend server running on port ${port}`);

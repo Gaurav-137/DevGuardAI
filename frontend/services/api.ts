@@ -62,79 +62,155 @@ let insightStore: AIInsight[] = [];
 
 const API_BASE = 'http://localhost:3002/api';
 
+const handleResponse = async <T>(response: Response): Promise<T> => {
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type');
+    let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+
+    if (contentType?.includes('application/json')) {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorMessage;
+    } else {
+      const text = await response.text();
+      console.error('Non-JSON response:', text.substring(0, 200));
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    throw new Error(`Expected JSON response but got ${contentType}`);
+  }
+
+  return response.json();
+};
+
 export const apiService = {
   getDevelopers: async (): Promise<Developer[]> => {
-    const response = await fetch(`${API_BASE}/developers`);
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE}/developers`);
+      return handleResponse<Developer[]>(response);
+    } catch (error) {
+      console.error('Failed to fetch developers:', error);
+      throw error;
+    }
   },
 
   addDeveloper: async (dev: Omit<Developer, 'id' | 'created_at'>): Promise<Developer> => {
-    const response = await fetch(`${API_BASE}/developers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dev)
-    });
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE}/developers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dev)
+      });
+      return handleResponse<Developer>(response);
+    } catch (error) {
+      console.error('Failed to add developer:', error);
+      throw error;
+    }
   },
 
   logActivity: async (activity: Omit<ActivityRecord, 'id'>): Promise<ActivityRecord> => {
-    const response = await fetch(`${API_BASE}/activity`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(activity)
-    });
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE}/activity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activity)
+      });
+      return handleResponse<ActivityRecord>(response);
+    } catch (error) {
+      console.error('Failed to log activity:', error);
+      throw error;
+    }
   },
 
   getDashboardData: async (devId: number): Promise<DashboardData> => {
-    const [devResponse, metricsResponse, insightsResponse] = await Promise.all([
-      fetch(`${API_BASE}/developers`),
-      fetch(`${API_BASE}/metrics/${devId}`),
-      fetch(`${API_BASE}/insights/${devId}`)
-    ]);
-    
-    const developers = await devResponse.json();
-    const metrics = await metricsResponse.json();
-    const insights = await insightsResponse.json();
-    
-    const developer = developers.find((d: Developer) => d.id === devId);
-    if (!developer) throw new Error("Subject ID not found.");
-    
-    return {
-      developer,
-      latestMetric: {
-        id: Date.now(),
-        developer_id: devId,
-        burnout_score: metrics.burnout_score,
-        risk_level: metrics.risk_level,
-        measured_at: new Date().toISOString()
-      },
-      activities: metrics.activities || [],
-      insights: insights || []
-    };
+    try {
+      const response = await fetch(`${API_BASE}/metrics/${devId}`);
+      const data = await handleResponse<any>(response);
+
+      return {
+        developer: data.developer,
+        latestMetric: data.latestMetric,
+        activities: data.activities || [],
+        insights: data.insights || []
+      };
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+      throw error;
+    }
   },
 
   getAllActivities: async (): Promise<ActivityRecord[]> => {
-    // For demo, we'll use the mock data since we don't have a specific endpoint
-    return new Promise((r) => setTimeout(() => r([...activityStore]), 400));
+    try {
+      const response = await fetch(`${API_BASE}/activities`);
+      return handleResponse<ActivityRecord[]>(response);
+    } catch (error) {
+      console.error('Failed to fetch activities, using fallback:', error);
+      // Fallback to mock data if API fails
+      return [...activityStore];
+    }
   },
 
   saveInsight: async (insight: Omit<AIInsight, 'id' | 'created_at'>): Promise<AIInsight> => {
-    const response = await fetch(`${API_BASE}/insights`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(insight)
-    });
-    return response.json();
-  },
-  
-  getInsightsHistory: async (devId?: number): Promise<AIInsight[]> => {
-    if (devId) {
-      const response = await fetch(`${API_BASE}/insights/${devId}`);
-      return response.json();
+    try {
+      const response = await fetch(`${API_BASE}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(insight)
+      });
+      return handleResponse<AIInsight>(response);
+    } catch (error) {
+      console.error('Failed to save insight:', error);
+      throw error;
     }
-    // Fetch all insights from backend
-    const response = await fetch(`${API_BASE}/insights`);
-    return response.json();
+  },
+
+  deleteActivity: async (id: number | string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE}/activity/${id}`, {
+        method: 'DELETE'
+      });
+      await handleResponse<any>(response);
+    } catch (error) {
+      console.error('Failed to delete activity:', error);
+      throw error;
+    }
+  },
+
+  deleteDeveloper: async (id: number | string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE}/developers/${id}`, {
+        method: 'DELETE'
+      });
+      await handleResponse<any>(response);
+    } catch (error) {
+      console.error('Failed to delete developer:', error);
+      throw error;
+    }
+  },
+
+  getInsightsHistory: async (devId?: number): Promise<AIInsight[]> => {
+    try {
+      const url = devId ? `${API_BASE}/insights/${devId}` : `${API_BASE}/insights`;
+      const response = await fetch(url);
+      return handleResponse<AIInsight[]>(response);
+    } catch (error) {
+      console.error('Failed to fetch insights:', error);
+      return [];
+    }
+  },
+
+  deleteInsight: async (id: number | string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE}/insights/${id}`, {
+        method: 'DELETE'
+      });
+      await handleResponse<any>(response);
+    } catch (error) {
+      console.error('Failed to delete insight:', error);
+      throw error;
+    }
   }
 };

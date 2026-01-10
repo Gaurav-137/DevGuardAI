@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Activity, Users, AlertTriangle, TrendingUp, Zap, Target, LayoutGrid } from 'lucide-react';
 import { apiService } from '../services/api';
 import { ActivityRecord, Developer } from '../types';
+import { formatChartDate } from '../utils/dateUtils';
 
 const GlobalDashboard: React.FC = () => {
     const [activities, setActivities] = useState<ActivityRecord[]>([]);
@@ -37,9 +38,9 @@ const GlobalDashboard: React.FC = () => {
     );
 
     // Aggregations
-    const totalCommits = activities.reduce((acc, curr) => acc + curr.commits, 0);
-    const totalTasks = activities.reduce((acc, curr) => acc + curr.tasks_completed, 0);
-    const totalHours = activities.reduce((acc, curr) => acc + curr.work_hours, 0);
+    const totalCommits = activities.reduce((acc, curr) => acc + (Number(curr.commits) || 0), 0);
+    const totalTasks = activities.reduce((acc, curr) => acc + (Number(curr.tasks_completed) || 0), 0);
+    const totalHours = activities.reduce((acc, curr) => acc + (Number(curr.work_hours) || 0), 0);
 
     // Chart Data preparation
     const dailyActivity = activities.reduce((acc: any, curr) => {
@@ -47,7 +48,13 @@ const GlobalDashboard: React.FC = () => {
         acc[curr.activity_date].output += (curr.commits + curr.tasks_completed);
         return acc;
     }, {});
-    const chartData = Object.values(dailyActivity).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(-14);
+    const chartData = Object.values(dailyActivity)
+        .sort((a: any, b: any) => a.date.localeCompare(b.date))
+        .slice(-14)
+        .map((item: any) => ({
+            ...item,
+            displayDate: formatChartDate(item.date)
+        }));
 
     // Status Distribution
     const roleDistribution = devs.reduce((acc: Record<string, number>, curr) => {
@@ -103,7 +110,7 @@ const GlobalDashboard: React.FC = () => {
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--c-primary)" strokeOpacity={0.1} />
-                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-primary)', fontSize: 10, fontWeight: 'bold' }} />
+                                    <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-primary)', fontSize: 10, fontWeight: 'bold' }} />
                                     <Tooltip
                                         contentStyle={{ background: 'var(--c-bg)', border: '1px solid var(--c-primary)', borderRadius: '12px', color: 'var(--c-primary)' }}
                                         labelStyle={{ color: 'var(--c-secondary)', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase' }}

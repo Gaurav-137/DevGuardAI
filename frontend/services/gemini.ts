@@ -8,18 +8,18 @@ export async function generateDeveloperInsight(
 ) {
   // Simplified mock implementation for now
   // In production, this would integrate with Google Generative AI
-  
+
   const recent = activities.slice(0, 7);
-  const totalHours = recent.reduce((s, a) => s + a.work_hours, 0);
-  const totalMeetings = recent.reduce((s, a) => s + a.meetings, 0);
-  const totalPRs = recent.reduce((s, a) => s + a.pull_requests, 0);
-  const currentBacklog = recent[0]?.pending_tasks || 0;
+  const totalHours = recent.reduce((s, a) => s + (Number(a.work_hours) || 0), 0);
+  const totalMeetings = recent.reduce((s, a) => s + (Number(a.meetings) || 0), 0);
+  const totalPRs = recent.reduce((s, a) => s + (Number(a.pull_requests) || 0), 0);
+  const currentBacklog = Number(recent[0]?.pending_tasks) || 0;
 
   // Mock AI analysis based on metrics
   let primaryDriver = "Workload Balance";
   let actions = [
     "Monitor daily work hour distribution",
-    "Schedule regular check-ins with team lead", 
+    "Schedule regular check-ins with team lead",
     "Implement task prioritization framework"
   ];
 
